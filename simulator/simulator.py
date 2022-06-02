@@ -1,8 +1,11 @@
 import json
+from struct import pack
 import paho.mqtt.client as mqttclient
+from geopy import distance
 import time
 from classes import Drone
 from classes import Station
+from classes import Package
 
 def on_connect():
     pass
@@ -38,7 +41,7 @@ def publish(client):
     msg_count += 1
 
 
-def read_drones_info(file):
+def read_sim_info(file):
     f = open(file)
     data = json.load(f)
     return data
@@ -48,20 +51,43 @@ def run():
     client = connect_mqtt()
     client.loop_start()
 
-    DRONES_NUMBER = 10
-    STATIONS_NUMBER = 5
+    sim_info = read_sim_info('simulation.json')
+    
     drones_list = []
-    info = read_drones_info('Drones.json')
+    stations_list = []
+    origin = (sim_info['origin']['latitude'], sim_info['origin']['longitude'])
+    destination = (sim_info['destination']['latitude'], sim_info['destination']['longitude'])
+    package = Package(sim_info['package'])
 
-    for i in range(DRONES_NUMBER):
-        drones_list.append(Drone(i, info[i]))
+    for i in range(len(sim_info['drones'])):
+        drones_list.append(Drone(i, sim_info['drones'][i]))
 
-    for i in range(STATIONS_NUMBER):
-        drones_list.append(Station(i, info[i]))
+    for j in range(len(sim_info['stations'])):
+        new_station = Station(j, sim_info['stations'][j])
+        new_station.parked_drones = [d for d in drones_list if d.id in new_station.parked_drones]
+        stations_list.append(new_station)
+
 
     while True:
-        
-        publish(client)
+        #publish(client)
+
+        # The package didn't arrive to destination yet
+        if distance.distance(package.position, destination).m > 100:
+            print("Package didn't arrive to destination yet")
+            
+            # The package is moving, the drone should go in direction of destination
+            if package.carried_by != None:
+                package.carried_by.move_forward()
+            
+            # The package is not moving, it should be picked up by a drone
+            else:
+                closest_station = stations_list[0]
+                for station in stations_list:
+                    if distance.distance(package.position, station.position) < distance.distance(package.position, closest_station.position):
+                        closest_station = station
+                
+                closest_station.get_available_drone().pick_package(package)
+                
 
 
 if __name__ == '__main__':
