@@ -5,9 +5,6 @@ from typing import List
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-import databases
-import sqlalchemy
-
 import random
 import string
 
