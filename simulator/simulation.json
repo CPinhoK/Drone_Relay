@@ -1,87 +1,87 @@
 {
     "origin": 
-    {
-        "latitude": 40.637188008105035,
-        "longitude": -8.632518395421563
+    { 
+        "latitude": 40.62571719919191,
+        "longitude": -8.736145471811001
     },
-    "destination": 
+    "destination":
     {
-        "latitude": 40.68212993837249,
-        "longitude": -8.513696932084093
+        "latitude": 40.64142951438382,
+        "longitude": -8.596832267498808
     },
     "package": 
     {
-        "latitude": 40.637188008105035,
-        "longitude": -8.632518395421563
+        "latitude": 40.62571719919191,
+        "longitude": -8.736145471811001
     },
     "drones":  [
         {
             "id": 0,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.62571719919191,
+            "longitude": -8.736145471811001,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 1,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.62571719919191,
+            "longitude": -8.736145471811001,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 2,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.62968316237995,
+            "longitude": -8.701119469933136,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 3,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.62968316237995,
+            "longitude": -8.701119469933136,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 4,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.63360764533727,
+            "longitude": -8.666268593539778,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 5,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.63360764533727,
+            "longitude": -8.666268593539778,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 6,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.6375448049833,
+            "longitude": -8.631280773207264,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 7,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.6375448049833,
+            "longitude": -8.631280773207264,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 8,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.64132547993768,
+            "longitude": -8.597812474664815,
             "speed": 0,
             "acceleration": 0
         },
         {
             "id": 9,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.64132547993768,
+            "longitude": -8.597812474664815,
             "speed": 0,
             "acceleration": 0
         }
@@ -97,32 +97,32 @@
         },
         {
             "id": 1,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.62968316237995,
+            "longitude": -8.701119469933136,
             "speed": 0,
             "accelaration": 0,
             "parked_drones":[2, 3]
         },
         {
             "id": 2,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.63360764533727,
+            "longitude": -8.666268593539778,
             "speed": 0,
             "accelaration": 0,
             "parked_drones":[4, 5]
         },
         {
             "id": 3,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.6375448049833,
+            "longitude": -8.631280773207264,
             "speed": 0,
             "accelaration": 0,
             "parked_drones":[6, 7]
         },
         {
             "id": 4,
-            "latitude": 0,
-            "longitude": 0,
+            "latitude": 40.64132547993768,
+            "longitude": -8.597812474664815,
             "speed": 0,
             "accelaration": 0,
             "parked_drones":[8, 9]

@@ -5,6 +5,9 @@ pickup_loc=(40.637188008105035, -8.632518395421563 )
 target_loc=(40.68212993837249, -8.513696932084093  )
 
 
+centre = (40.63370973647428, -8.665803182942222)
+
+
 d1=dt.distance(base_a, pickup_loc)
 d2=dt.distance(pickup_loc, target_loc)
 print(base_a,pickup_loc)

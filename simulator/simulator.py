@@ -1,5 +1,4 @@
 import json
-from struct import pack
 import paho.mqtt.client as mqttclient
 from geopy import distance
 import time
@@ -53,10 +52,12 @@ def run():
 
     sim_info = read_sim_info('simulation.json')
     
+    time_interval = 0.1
+
     drones_list = []
     stations_list = []
-    origin = (sim_info['origin']['latitude'], sim_info['origin']['longitude'])
-    destination = (sim_info['destination']['latitude'], sim_info['destination']['longitude'])
+    package_origin = (sim_info['origin']['latitude'], sim_info['origin']['longitude'])
+    package_destination = (sim_info['destination']['latitude'], sim_info['destination']['longitude'])
     package = Package(sim_info['package'])
 
     for i in range(len(sim_info['drones'])):
@@ -72,21 +73,31 @@ def run():
         #publish(client)
 
         # The package didn't arrive to destination yet
-        if distance.distance(package.position, destination).m > 100:
+        if distance.distance(package.position, package_destination).m > 100:
             print("Package didn't arrive to destination yet")
             
             # The package is moving, the drone should go in direction of destination
             if package.carried_by != None:
-                package.carried_by.move_forward()
+                current_drone = package.carried_by
+                print("Package is moving")
+
+                # Check if drone han enough battery to reach package_destination
+                if distance.distance(current_drone.position, package_destination) < current_drone.get_available_range():
+                    pass
+                current_drone.move_forward(package_destination, time_interval)
+                package.position = current_drone.position
             
             # The package is not moving, it should be picked up by a drone
             else:
+                print("Package is NOT moving")
                 closest_station = stations_list[0]
                 for station in stations_list:
                     if distance.distance(package.position, station.position) < distance.distance(package.position, closest_station.position):
                         closest_station = station
                 
                 closest_station.get_available_drone().pick_package(package)
+
+        time.sleep(time_interval)
                 
 
 
