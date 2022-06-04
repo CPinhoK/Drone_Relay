@@ -2,7 +2,7 @@
 ## Requirements
 
 ```bash 
-pip install - r requirments.txt
+pip install -r requirments.txt
 ```
 
 ## Running commands
