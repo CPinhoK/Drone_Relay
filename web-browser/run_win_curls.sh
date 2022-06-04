@@ -15,7 +15,8 @@ do
     "has_package": true
   }'
  sleep 1
- x=$(echo $x + 0.0005 | bc)
+ x=$(echo $x + 0.0003 | bc)
  i=$(( $i + 1 ))
- echo $x
-done
+ echo $x 
+ 
+ done
