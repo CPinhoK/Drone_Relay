@@ -64,6 +64,7 @@ async def get_status():
 
 @app.post("/drone")
 async def Add_drone_info(request: Request,dinfo: Droneinfo):
+    print(request)
     global DRONES
     for i in range(len(DRONES)):
         if DRONES[i].id==dinfo.id:

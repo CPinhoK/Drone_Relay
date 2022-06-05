@@ -55,6 +55,11 @@ var progressIDs = [];   // List with progress bar's IDs
 var doneList = {};      // nodes that have finished the transfer
 var startedList = {};   // nodes that have started the transfer
 var currentTS = 0;
+var showinfflag=false
+
+
+var prevmarkersDrones    = L.layerGroup().addTo(map);
+var prevmarkersStations  = L.layerGroup().addTo(map);
 
 
 
@@ -86,23 +91,46 @@ function updateMap(data){
 // Updates RSU and OBU markers for the new positions.
 function updateMarkers(data){
     // Clear and update markers
-    currentmarkersDrones.clearLayers();
     currentmarkersStations.clearLayers();
+    currentmarkersDrones.clearLayers();
+
+
+
     for(i = 0; i < data.length; i++){
         console.log(data[i])
         var node = data[i];
         var marker = null;
+        
+        //console.log(node['has_package'])
+        if(node['has_package']==true){
+            marker = L.marker([node['lat'],node['lon']], {icon:droneIconpack});
+        }
+        else{
+            marker = L.marker([node['lat'],node['lon']], {icon:droneIcon});
+        }
+
+        const popup = L.popup({
+            closeOnClick: false,
+            autoClose: false
+          });
+        popup.setContent("ID: "+node['id']+", Drone"+" Has_package: "+node['has_package']);
+        marker.bindPopup(popup).openPopup();
 
 
-        console.log(node['lat'])
-        console.log(node['lon'])
+        //marker.on('click', function() {
+        //marker.openPopup();
+        //} );
 
-        marker = L.marker([node['lat'],node['lon']], {icon:droneIcon});
-        marker.bindPopup("ID: "+node['id']+", Drone").openPopup();
         marker.addTo(currentmarkersDrones);
-     
+
         // Update 'positions' structure
         positions[node['id']] = new L.LatLng(node['lat'], node['lon']);
+    }
+    console.log("flag:"+showinfflag);
+    if(showinfflag){
+        currentmarkersDrones.eachLayer(function (layer) {
+            layer.openPopup();
+        });
     }
 }
 
@@ -117,4 +145,10 @@ function parseData(data){
     updateMap(data);
 }
 
-setInterval(requestData, 800,'http://127.0.0.1:8000/drone');
+function clickShowinfo(){
+    console.log("showinfo was clicked")
+    showinfflag=!showinfflag;
+    console.log(showinfflag)
+}
+
+setInterval(requestData, 1000,'http://127.0.0.1:8000/drone');
