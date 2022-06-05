@@ -1,8 +1,8 @@
 import time
 from geopy import distance as dt
 base_a=(40.634143433650856, -8.631619736734109 )
-pickup_loc=(40.637188008105035, -8.632518395421563 )
-target_loc=(40.68212993837249, -8.513696932084093  )
+pickup_loc=(40.636591182915225, -8.644356258680594 )
+target_loc=(40.64107609738405, -8.630484570292488)
 
 
 centre = (40.63370973647428, -8.665803182942222)
@@ -26,9 +26,9 @@ def gen_cords(init,fin,steps):
     pos.append(fin)
     return pos
 
-lis = gen_cords(base_a,pickup_loc,5)
+lis = gen_cords(pickup_loc,target_loc,70)
 print(lis)
 for i in range(len(lis)-1):
     d=dt.distance(lis[i],lis[i+1])
-    print(i)
+    #print(i)
     print(d.meters)
