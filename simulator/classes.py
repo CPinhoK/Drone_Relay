@@ -15,6 +15,8 @@ class Drone():
         self.hasCargo = False
         self.moving = False
         self.neighborsInRange = []
+
+        self.client = None
         
     def start_race(self):
         self.current_race = 0
@@ -25,7 +27,7 @@ class Drone():
         dist = time_interval*3600/self.speed
         self.position = geo_lib.get_coordinates(self.position, destination, dist)
         self.current_race += dist
-        self.update_battery_level()
+        self.update_battery_level(dist)
         print("Drone new position " + str(self.position))
 
     def move_to_station(self):
@@ -35,7 +37,7 @@ class Drone():
         pass
 
     def pick_package(self, package):
-        print("Picking package")
+        print("Drone " + str(self.client._client_id[-2:]) + " picking package")
 
         package.carried_by = self
         self.hasCargo = True
@@ -61,6 +63,8 @@ class Station():
         self.longitude = station_info['longitude']
         self.position = (self.latitude, self.longitude)
         self.parked_drones = station_info['parked_drones']
+
+        self.client = None
     
     def get_available_drone(self):
         print("Get available drone based on battery level")
