@@ -89,8 +89,8 @@
     "stations": [
         {
             "id": 0,
-            "latitude": 40.634143433650856,
-            "longitude": -8.631619736734109,
+            "latitude": 40.62571719919191,
+            "longitude": -8.736145471811001,
             "speed": 0,
             "accelaration": 0,
             "parked_drones":[0, 1]
