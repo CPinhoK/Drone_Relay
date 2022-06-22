@@ -61,7 +61,8 @@ var showinfflag=false
 var prevmarkersDrones    = L.layerGroup().addTo(map);
 var prevmarkersStations  = L.layerGroup().addTo(map);
 
-
+var DroneInfo =[];
+var StationInfo =[];
 
 // Pulls status information from the sim_manager and calls parseData() when ready.
 function requestData(url){ // url example http://127.0.0.1:8000/drone?id=1'
@@ -91,7 +92,7 @@ function updateMap(data){
 // Updates RSU and OBU markers for the new positions.
 function updateMarkers(data){
     // Clear and update markers
-    currentmarkersStations.clearLayers();
+    //currentmarkersStations.clearLayers();
     currentmarkersDrones.clearLayers();
 
 
@@ -101,36 +102,76 @@ function updateMarkers(data){
         var node = data[i];
         var marker = null;
         
-        //console.log(node['has_package'])
-        if(node['has_package']==true){
-            marker = L.marker([node['lat'],node['lon']], {icon:droneIconpack});
+        if(node['has_package']!=null||node['has_package']!=undefined){
+            console.log("drone")    
+            try {
+
+                //console.log(node['has_package'])
+                if(node['has_package']==true){
+                    marker = L.marker([node['lat'],node['lon']], {icon:droneIconpack});
+                }
+                else{
+                    marker = L.marker([node['lat'],node['lon']], {icon:droneIcon});
+                }
+
+                const popup = L.popup({
+                    closeOnClick: false,
+                    autoClose: false
+                });
+                popup.setContent("ID: "+node['id']+", Drone"+" Has_package: "+node['has_package']);
+                marker.bindPopup(popup).openPopup();
+
+
+                //marker.on('click', function() {
+                //marker.openPopup();
+                //} );
+
+                marker.addTo(currentmarkersDrones);
+
+                // Update 'positions' structure
+                positions[node['id']] = new L.LatLng(node['lat'], node['lon']);
+
+                DroneInfo.push(JSON.stringify(node))
+            }
+            catch(err) {
+                console.log(err)
         }
-        else{
-            marker = L.marker([node['lat'],node['lon']], {icon:droneIcon});
+        }else{
+            StationInfo =[];
+            console.log("station")
+            try {
+                currentmarkersStations.clearLayers();
+
+                marker = L.marker([node['lat'],node['lon']], {icon:stationIcon});
+                const popup = L.popup({
+                    closeOnClick: false,
+                    autoClose: false
+                });
+                popup.setContent("ID: "+node['id']+", Station with drones: "+node['drones']);
+                marker.bindPopup(popup).openPopup();
+
+                marker.addTo(currentmarkersStations);
+
+                // Update 'positions' structure
+                positions[node['id']] = new L.LatLng(node['lat'], node['lon']);
+                
+                StationInfo.push(JSON.stringify(node))
+            }
+            catch(err) {
+                console.log(err)
+            }
         }
-
-        const popup = L.popup({
-            closeOnClick: false,
-            autoClose: false
-          });
-        popup.setContent("ID: "+node['id']+", Drone"+" Has_package: "+node['has_package']);
-        marker.bindPopup(popup).openPopup();
-
-
-        //marker.on('click', function() {
-        //marker.openPopup();
-        //} );
-
-        marker.addTo(currentmarkersDrones);
-
-        // Update 'positions' structure
-        positions[node['id']] = new L.LatLng(node['lat'], node['lon']);
     }
     console.log("flag:"+showinfflag);
     if(showinfflag){
         currentmarkersDrones.eachLayer(function (layer) {
             layer.openPopup();
         });
+        currentmarkersStations.eachLayer(function (layer) {
+            layer.openPopup();
+        });
+        document.getElementById('Show_info').innerHTML= "Stations" + StationInfo +"\n\nDrones"+ DroneInfo;
+        DroneInfo=[];
     }
 }
 
@@ -149,6 +190,15 @@ function clickShowinfo(){
     console.log("showinfo was clicked")
     showinfflag=!showinfflag;
     console.log(showinfflag)
+    document.getElementById('Show_info').innerHTML= "";
 }
 
+function clearINFO(){
+    StationInfo=[];
+    DroneInfo=[];
+}
+
+setInterval(requestData, 5000,'http://127.0.0.1:8000/station');
 setInterval(requestData, 1000,'http://127.0.0.1:8000/drone');
+
+setInterval(clearINFO, 5000);

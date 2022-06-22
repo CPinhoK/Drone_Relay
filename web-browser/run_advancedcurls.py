@@ -64,6 +64,17 @@ data2={"id": "2","lat": DataList_2[0][0],"lon": DataList_2[0][1],"has_package": 
 res = requests.post(url,headers=headers,json=payload2)
 print(res.text)
 
+
+#station post
+print("hello")
+nurl = "http://127.0.0.1:8000/station"
+ndata = {"id": "station1","lat": DataList_1[0][0],"lon": DataList_1[0][1],"drones":[]}
+npayload = dict(ndata)
+nres = requests.post(nurl,headers=headers,json=npayload)
+print(nres.text)
+
+
+
 for i in range(len(DataList_1)):
     data={"id": "1","lat": DataList_1[i][0],"lon": DataList_1[i][1],"has_package": True}
     payload = dict(data)
@@ -87,3 +98,5 @@ for i in range(len(DataList_2)):
     
     #(40.634143433650856, -8.631619736734109)
     #(40.64107609738405, -8.630484570292488)
+
+

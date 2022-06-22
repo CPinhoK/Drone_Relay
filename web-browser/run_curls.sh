@@ -9,7 +9,7 @@ do
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d '{
-    "id": "string",
+    "id": "5",
     "lat":'$x',
     "lon": -8.631619736734109,
     "has_package": true

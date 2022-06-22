@@ -1,3 +1,4 @@
+from pyrsistent import s
 import geo_lib
 from geopy import distance
 import json
@@ -88,6 +89,8 @@ class Station():
         self.longitude = station_info['longitude']
         self.position = (self.latitude, self.longitude)
         self.parked_drones = station_info['parked_drones']
+        self.flying_drones = []
+
 
         self.client = None
     
@@ -102,8 +105,47 @@ class Station():
 
         return next_drone
 
-    def receive_denm(self, drone_id):
-        pass
+    def receive_denm(self,indic):
+        drone_id=indic['management']['actionID']['originatingStationID']
+        cause_code=indic['situation']['eventType']['causeCode']
+        sub_cause_code=indic['situation']['eventType']['subCauseCode']
+        if cause_code==34:
+            n_drone=self.get_available_drone()
+            self.parked_drones.pop(n_drone)
+            for drone in self.flying_drones:
+                if drone_id==drone.id:
+                    self.flying_drones.pop(drone)
+                    drone.hasCargo=False
+                    self.parked_drones.append(drone)
+                    break
+            n_drone.hasCargo=True
+            self.flying_drones.append(n_drone)
+        if cause_code==32:
+            u_drone=None
+            for drone in self.parked_drones:
+                if drone_id==drone.id:
+                    u_drone=drone
+                    if sub_cause_code==1:
+                        drone.battery=33
+                    elif sub_cause_code==2:
+                        drone.battery=66
+                    elif sub_cause_code==3:
+                        drone.battery=100
+                    break
+            for drone in self.flying_drones:
+                if drone_id==drone.id:
+                    u_drone=drone
+                    if sub_cause_code==1:
+                        drone.battery=33
+                    elif sub_cause_code==2:
+                        drone.battery=66
+                    elif sub_cause_code==3:
+                        drone.battery=100
+                    break
+            if u_drone==None:
+                print("\n Error\n")
+                return -1
+        return cause_code
         
 
 class Package():
