@@ -1,5 +1,6 @@
 import geo_lib
 from geopy import distance
+import json
 
 class Drone():
     def __init__(self, id, drone_info):
@@ -15,6 +16,7 @@ class Drone():
         self.hasCargo = False
         self.moving = False
         self.neighborsInRange = []
+        self.last_station = None
 
         self.client = None
         
@@ -43,6 +45,14 @@ class Drone():
         self.hasCargo = True
         self.start_race()
 
+        # battery status
+        sub_cause_code = 3
+        if self.battery <= 33:
+            sub_cause_code = 1
+        elif self.battery <= 66:
+            sub_cause_code = 2
+        self.send_denm(32, sub_cause_code)
+
     def update_battery_level(self, dist):
         self.battery -= dist*100/self.max_range
 
@@ -52,8 +62,23 @@ class Drone():
     def send_cam(self):
         pass
 
-    def send_denm(self):
-        pass
+    def send_denm(self, cause_code, sub_cause_code):
+        f = open('in_denm.json')
+        msg = json.load(f)
+
+        msg['management']['actionID']['originatingStationID'] = self.client._client_id.decode()[-2:]
+        msg['management']['stationType'] = 5
+        msg['situation']['eventType']['causeCode'] = cause_code
+        msg['situation']['eventType']['subCauseCode'] = sub_cause_code
+
+        msg = str(msg).replace("\'", "\"")
+        result = self.client.publish("vanetza/in/denm", msg)
+        # result: [0, 1]
+        status = result[0]
+        if status == 0:
+            print(f"Send {msg} to topic vanetza/in/denm of {self.client._client_id.decode()[-2:]}")
+        else:
+            print(f"Failed to send message to topic vanetza/in/denm")
 
 
 class Station():

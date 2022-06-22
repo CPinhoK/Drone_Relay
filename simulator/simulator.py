@@ -2,9 +2,12 @@ import json
 import paho.mqtt.client as mqttclient
 from geopy import distance
 import time
+import os
 from classes import Drone
 from classes import Station
 from classes import Package
+
+INIT_BLOCK = True
 
 connected = False
 broker_address = "192.168.98.11"
@@ -40,6 +43,11 @@ def connect_mqtt(addr):
                     drone = d
                     break
             drone.pick_package(package)
+
+        # if message received by RSU (station) with OBU (drone) battery status 
+        elif msg_dict['situation']['eventType']['causeCode'] == 32 and msg_dict['management']['stationType'] == 15:
+            # update battery status on stations
+            station = [x for x in stations_list if x.client._client_id.decode()[-2:] == str(msg_dict['management']['actionID']['originatingStationID'])]
         else:
             pass
 
@@ -79,9 +87,9 @@ def run():
 
     package_origin = (sim_info['origin']['latitude'], sim_info['origin']['longitude'])
     package_destination = (sim_info['destination']['latitude'], sim_info['destination']['longitude'])
+    
     global package
     package = Package(sim_info['package'])
-    #print("PACKAGE " + str(package))
 
     for i in range(len(sim_info['drones'])):
         new_drone = Drone(i, sim_info['drones'][i])
@@ -95,7 +103,11 @@ def run():
         new_station.parked_drones = [d for d in drones_list if d.id in new_station.parked_drones]
         new_station.client = connect_mqtt(stations_addresses[j])
         new_station.client.loop_start() # Connect to brocker
-        stations_list.append(new_station)    
+        stations_list.append(new_station)
+
+    os.chdir('../../vanetza')
+    if INIT_BLOCK:
+        block_by_range()
 
     while True:
         #publish(client)
@@ -114,6 +126,7 @@ def run():
                     pass
                 current_drone.move_forward(package_destination, time_interval)
                 package.position = current_drone.position
+                update_in_range(current_drone)
             
             # The package is not moving, it should be picked up by a drone
             else:
@@ -125,19 +138,83 @@ def run():
                 
                 next_drone = closest_station.get_available_drone()
 
+                # Build and send DENM message with the id of drone that should pick the package
                 msg = denm_template
+                msg['management']['stationType'] = 15
                 msg['situation']['eventType']['causeCode'] = 45
                 msg['situation']['eventType']['subCauseCode'] = int(next_drone.client._client_id.decode()[-2:])
-                
                 publish(closest_station.client, topic_denm_in, str(msg))
 
         time.sleep(time_interval)
-                
 
 
-def block_unreachable_devices():
-    pass
+def update_in_range(drone):
+    drone_id = drone.client._client_id.decode()[-2:]
+    closest_station = None
 
+    for s in stations_list:
+        s_id = s.client._client_id.decode()[-2:]
+        if s_id != drone_id:
+            if distance.distance(drone.position, s.position).m < 500 and s != drone.last_station:
+                os.system(f'docker-compose exec obu-{drone_id} unblock 6e:06:e0:03:00:{s_id}')
+                os.system(f'docker-compose exec rsu-{s_id} unblock 6e:06:e0:03:00:{drone_id}')
+
+                os.system(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{drone.last_station.client._client_id.decode()[-2:]}')
+                os.system(f'docker-compose exec rsu-{drone.last_station.client._client_id.decode()[-2:]} block 6e:06:e0:03:00:{drone_id}')
+
+                drone.last_station = s
+                closest_station = s
+                break
+
+    if closest_station != None:
+        for d in drone.last_station.parked_drones:
+            d_id = d.client._client_id.decode()[-2:]
+            if d_id != drone_id:
+                if distance.distance(drone.position, d.position).m > 500:
+                    #print(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{d_id} block 6e:06:e0:03:00:{drone_id}')
+                else:
+                    os.system(f'docker-compose exec obu-{drone_id} unblock 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{d_id} unblock 6e:06:e0:03:00:{drone_id}')
+    else:
+        for d in drone.last_station.parked_drones:
+            d_id = d.client._client_id.decode()[-2:]
+            if d_id != drone_id:
+                if distance.distance(drone.position, d.position).m > 500:
+                    #print(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{d_id} block 6e:06:e0:03:00:{drone_id}')
+                else:
+                    os.system(f'docker-compose exec obu-{drone_id} unblock 6e:06:e0:03:00:{d_id}')
+                    os.system(f'docker-compose exec obu-{d_id} unblock 6e:06:e0:03:00:{drone_id}')    
+
+
+def block_by_range():
+    for drone in drones_list:
+        drone_id = drone.client._client_id.decode()[-2:]
+        for d in [x for x in drones_list if x != drone]:
+            d_id = d.client._client_id.decode()[-2:]
+            if distance.distance(drone.position, d.position).m > 500:
+                #print(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                os.system(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+        
+        for s in stations_list:
+            s_id = s.client._client_id.decode()[-2:]
+            if distance.distance(drone.position, s.position).m > 500:
+                os.system(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{s_id}')
+                os.system(f'docker-compose exec rsu-{s_id} block 6e:06:e0:03:00:{drone_id}')
+            else:
+                drone.last_station = s
+
+    for station in stations_list:
+        station_id = station.client._client_id.decode()[-2:]
+        for s in [x for x in stations_list if x != station]:
+            s_id = s.client._client_id.decode()[-2:]
+            if distance.distance(station.position, s.position).m > 500:
+                #print(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
+                os.system(f'docker-compose exec rsu-{station_id} block 6e:06:e0:03:00:{s_id}')
+        
 
 if __name__ == '__main__':
     run()
