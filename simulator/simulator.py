@@ -50,7 +50,7 @@ def connect_mqtt(addr):
         # only one station will receive this DENM because of range 
         
         elif client._client_id.decode()[-2:] in ['11', '12', '13', '14', '15']:
-            print("ID: " + client._client_id.decode()[-2:])
+            print("StationID: " + client._client_id.decode()[-2:])
             print("originating ID: " + str(msg_dict['management']['actionID']['originatingStationID']))
             station = [s for s in stations_list if s.client._client_id.decode()[-2:] == client._client_id.decode()[-2:]][0]
             print("station will receive denm")
@@ -59,6 +59,9 @@ def connect_mqtt(addr):
                 print("Next Drone id is:",next_d.id)
                 package.carried_by = next_d
                 package.print_carried_by()
+                next_d.start_race()
+                station.rmspecial(next_d)
+                update_map_station(station.id, station.latitude, station.longitude, [d.id for d in station.parked_drones])
             else:
                 print("Next Drone returned the value:",next_d)
         else:
@@ -92,6 +95,7 @@ def read_info(file):
 
 
 def run():
+    update_map_package(False)
     sim_info = read_info('simulation.json')
     time_interval = 0.1
 
@@ -108,6 +112,7 @@ def run():
         new_drone = Drone(i, sim_info['drones'][i])
         new_drone.client = connect_mqtt(drones_addresses[i])
         new_drone.client.loop_start() # Connect to brocker
+        new_drone.id=int(new_drone.client._client_id.decode()[-2:])
         drones_list.append(new_drone)
         update_map_drone(new_drone.client._client_id.decode()[-2:], new_drone.latitude, new_drone.longitude, new_drone.hasCargo, new_drone.battery)
         
@@ -117,6 +122,8 @@ def run():
         new_station.parked_drones = [d for d in drones_list if d.id in new_station.parked_drones]
         new_station.client = connect_mqtt(stations_addresses[j])
         new_station.client.loop_start() # Connect to brocker
+        new_station.alldrones=drones_list
+        new_station.id=int(new_station.client._client_id.decode()[-2:])
         stations_list.append(new_station)
         update_map_station(new_station.client._client_id.decode()[-2:], new_station.latitude, new_station.longitude, [d.id for d in new_station.parked_drones])
 
@@ -126,7 +133,31 @@ def run():
         block_by_range()
 
     while True:
-        #publish(client)
+        for d in drones_list:
+            msg = cam_template
+            msg['stationID'] = int(d.id)
+            msg['stationType'] = 5
+            msg['speed'] = d.speed
+            msg['latitude'] = d.latitude
+            msg['longitude'] = d.longitude
+            
+            if d.hasCargo:
+                msg['altitude'] = 20
+            else:
+                msg['altitude'] = 0
+            
+            publish(d.client, topic_cam_in, str(msg))
+            
+        for s in stations_list:
+            msg = cam_template
+            msg['stationID'] = int(s.id)
+            msg['stationType'] = 15
+            msg['speed'] = 0
+            msg['latitude'] = s.latitude
+            msg['longitude'] = s.longitude
+            msg['altitude'] = 0
+            
+            publish(s.client, topic_cam_in, str(msg))
 
         # The package didn't arrive to destination yet
         if distance.distance(package.position, package_destination).m > 100:
@@ -143,6 +174,7 @@ def run():
                 print("2nd:"+str(current_drone.get_available_range()))
                 
                 if distance.distance(current_drone.position, package_destination).meters > current_drone.get_available_range():
+                    if current_drone.battery<50:
                         sub_cause_code=1
                         if current_drone.battery > 90:
                             sub_cause_code = 3
@@ -151,14 +183,20 @@ def run():
                         elif current_drone.battery <= 66:
                             sub_cause_code = 2
                         print("Drone will send denms")
-                        current_drone.send_denm(32, sub_cause_code)
                         current_drone.send_denm(34, 55)
+                        current_drone.send_denm(32, sub_cause_code)
 
                 current_drone.move_forward(package_destination, time_interval)
                 package.position = current_drone.position
 
                 update_map_drone(current_drone.client._client_id.decode()[-2:], current_drone.position[0], current_drone.position[1], current_drone.hasCargo, current_drone.battery)
                 update_in_range(current_drone)
+                
+                for i in range(len(drones_list)):
+                    if drones_list[i].id==current_drone.id:
+                        drones_list[i]=current_drone
+                        break
+                        
             
             # The package is not moving, it should be picked up by a drone
             else:
@@ -169,14 +207,41 @@ def run():
                         closest_station = station
                 
                 next_drone = closest_station.get_available_drone()
-
+                new_drone.istarted=True
+                #closest_station.flying_drones.append(next_drone)
                 # Build and send DENM message with the id of drone that should pick the package
                 msg = denm_template
                 msg['management']['stationType'] = 15
                 msg['situation']['eventType']['causeCode'] = 45
                 msg['situation']['eventType']['subCauseCode'] = int(next_drone.client._client_id.decode()[-2:])
                 publish(closest_station.client, topic_denm_in, str(msg))
-
+                print("first case parked",[d.id for d in closest_station.parked_drones])
+                update_map_station(closest_station.id, closest_station.latitude, closest_station.longitude, [d.id for d in closest_station.parked_drones])
+        else:
+            print("final drone list :",[d.hasCargo for d in drones_list])
+            for d in drones_list:
+                if(d.hasCargo==True):
+                    print("final dist:",(distance.distance(d.position,d.last_station.position).m))
+                    while(distance.distance(d.position,d.last_station.position).m > 10):
+                        print("lastsatid:",d.last_station.id)
+                        d.speed=200
+                        d.hasCargo=False
+                        d.move_forward((d.last_station.latitude,d.last_station.longitude),0.1)
+                        #time.sleep(0.05)
+                        update_map_drone(d.id,d.latitude,d.longitude,d.hasCargo,d.battery)
+                    d.speed=0
+                    d.last_station.parked_drones.append(d)
+                    update_map_station(d.last_station.id, d.last_station.latitude, d.last_station.longitude, [d.id for d in d.last_station.parked_drones])
+                    break
+            update_map_package(True)
+            break
+        
+        # for s in stations_list:
+        #     for drone in s.parked_drones:
+        #         #drone.hasCargo=False
+        #         if(abs(drone.latitude-s.latitude)>5 and abs(drone.longitude-s.longitude)>5):
+        #             drone.move_forward((s.latitude,s.longitude),time_interval)
+        #         break
         time.sleep(time_interval)
 
 
@@ -263,6 +328,13 @@ def update_map_station(id, lat, long, parked_drones):
     url = "http://127.0.0.1:8000/station"
     res = requests.post(url,headers=headers,json=payload)
 
+def update_map_package(val):
+    data={"has_arrived": val}
+    headers = {'accept': 'application/json','Content-Type': 'application/json'}
+    payload = dict(data)
+    url = "http://127.0.0.1:8000/package"
+    res = requests.post(url,headers=headers,json=payload)
+    
 def update_map_drone(id, lat, long, has_cargo, battery):
     data={"id": str(id),"lat": float(lat),"lon": float(long),"has_package": has_cargo, "battery": battery}
     headers = {'accept': 'application/json','Content-Type': 'application/json'}

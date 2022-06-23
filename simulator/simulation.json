@@ -93,7 +93,7 @@
             "longitude": -8.736145471811001,
             "speed": 0,
             "accelaration": 0,
-            "parked_drones":[0, 1]
+            "parked_drones":[21, 22]
         },
         {
             "id": 1,
@@ -101,7 +101,7 @@
             "longitude": -8.701119469933136,
             "speed": 0,
             "accelaration": 0,
-            "parked_drones":[2, 3]
+            "parked_drones":[23, 24]
         },
         {
             "id": 2,
@@ -109,7 +109,7 @@
             "longitude": -8.666268593539778,
             "speed": 0,
             "accelaration": 0,
-            "parked_drones":[4, 5]
+            "parked_drones":[25, 26]
         },
         {
             "id": 3,
@@ -117,7 +117,7 @@
             "longitude": -8.631280773207264,
             "speed": 0,
             "accelaration": 0,
-            "parked_drones":[6, 7]
+            "parked_drones":[27, 28]
         },
         {
             "id": 4,
@@ -125,7 +125,7 @@
             "longitude": -8.597812474664815,
             "speed": 0,
             "accelaration": 0,
-            "parked_drones":[8, 9]
+            "parked_drones":[29, 30]
         }
     ]
 }

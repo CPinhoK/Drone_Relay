@@ -2,7 +2,8 @@ import geo_lib
 from geopy import distance
 import json
 import os
-
+import requests
+import time
 class Drone():
     def __init__(self, id, drone_info):
         self.id = id
@@ -18,12 +19,13 @@ class Drone():
         self.moving = False
         self.neighborsInRange = []
         self.last_station = None
+        self.istarted=False
 
         self.client = None
         
     def start_race(self):
         self.current_race = 0
-        self.speed = 5000
+        self.speed = 12000
     
     # destination tuple(latitude, longitude); time_interval in seconds
     def move_forward(self, destination, time_interval):
@@ -35,9 +37,6 @@ class Drone():
 
         self.update_battery_level(dist)
         print("Drone new position " + str(self.position))
-
-    def move_to_station(self):
-        pass
 
     def drop_package(self):
         pass
@@ -94,19 +93,31 @@ class Station():
         self.position = (self.latitude, self.longitude)
         self.parked_drones = station_info['parked_drones']
         self.flying_drones = []
+        self.alldrones =[]
 
 
         self.client = None
+    def rmspecial(self,drone):
+        try:
+            self.parked_drones.remove(drone)
+        except:
+            pass
     
     def get_available_drone(self):
         print("Get available drone based on battery level")
-
-        # Choose drone based on battery level
-        next_drone = self.parked_drones[0]
-        for drone in self.parked_drones:
-            if drone.battery > next_drone.battery:
-                next_drone = drone
-
+        next_drone=None
+        try:
+            # Choose drone based on battery level
+            next_drone = self.parked_drones[0]
+            for drone in self.parked_drones:
+                if drone.battery > next_drone.battery:
+                    next_drone = drone
+        except:
+            print("itwasempty")
+            pass
+        
+        
+        self.parked_drones.remove(next_drone)
         return next_drone
 
     def receive_denm(self,indic):
@@ -116,19 +127,39 @@ class Station():
 
         if cause_code==34:
             n_drone=self.get_available_drone()
-            self.parked_drones.pop(n_drone)
-            for drone in self.flying_drones:
-                if drone_id==drone.id:
-                    self.flying_drones.pop(drone)
-                    drone.hasCargo=False
-                    self.parked_drones.append(drone)
-                    break
+            print("avaiable drone has id:",n_drone.id)
+            if(n_drone==None):
+                return n_drone
+            for drone in self.parked_drones:
+                if n_drone.id==drone.id:    
+                    self.parked_drones.remove(n_drone)
             n_drone.hasCargo=True
             self.flying_drones.append(n_drone)
+            for drone in self.alldrones:
+                print(drone.id)
+                if drone_id==drone.id:
+                    try:
+                        self.flying_drones.remove(drone)
+                    except:
+                        pass 
+                    drone.hasCargo=False
+                    print("dist in 34:",distance.distance(drone.position, self.position).m)
+                    while(distance.distance(drone.position, self.position).m > 20):
+                        print("i wanna move")
+                        drone.speed=200
+                        drone.move_forward(self.position,0.1)
+                        update_map_drone(drone.id,drone.latitude,drone.longitude,drone.hasCargo,drone.battery)
+                        #time.sleep(0.05)
+                    drone.speed=0
+                    self.parked_drones.append(drone)
+                    break
+            print("message by:",drone_id," inside 34",[d.id for d in self.flying_drones])
             return n_drone
         if cause_code==32:
-            print("\n Battery updated for drone " + str(drone_id) + "; batt: " + str(sub_cause_code) + "\n")
+            print("\nBattery updated for drone " + str(drone_id) + "; batt: " + str(sub_cause_code) + "\n")
             u_drone=None
+            #print("message by:",drone_id," inside 32",[d.id for d in self.parked_drones])
+            #print("message by:",drone_id," inside 32",[d.id for d in self.flying_drones])
             for drone in self.parked_drones:
                 if drone_id==drone.id:
                     u_drone=drone
@@ -149,10 +180,11 @@ class Station():
                     elif sub_cause_code==3:
                         drone.battery=100
                     break
-            print("\nU_Droneid:"+str(u_drone.id))
             if u_drone==None:
-                print("\n Error\n")
+                print("\nError\n")
                 return u_drone
+            else:
+                print("\nU_Droneid:"+str(u_drone.id))
         
         #print("Battery updated for drone " + str(u_drone.id) + "; batt: " + str(sub_cause_code.bat))
         return cause_code
@@ -166,4 +198,14 @@ class Package():
         self.carried_by = None
 
     def print_carried_by(self):
-        print("Package carried by drone " + self.carried_by.id)
+        print("Package carried by drone " , self.carried_by.id)
+        
+        
+
+
+def update_map_drone(id, lat, long, has_cargo, battery):
+    data={"id": str(id),"lat": float(lat),"lon": float(long),"has_package": has_cargo, "battery": battery}
+    headers = {'accept': 'application/json','Content-Type': 'application/json'}
+    payload = dict(data)
+    url = "http://127.0.0.1:8000/drone"
+    res = requests.post(url,headers=headers,json=payload)

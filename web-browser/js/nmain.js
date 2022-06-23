@@ -103,6 +103,10 @@ function updateMarkers(data,timeout){
         console.log(data[i])
         var node = data[i];
         var marker = null;
+
+        if(node['has_arrived']!=null){
+            document.getElementById('Packageinf').innerHTML= "Package arrived to destination:"+node['has_arrived']+"\n\n";
+        }
         
         if(node['has_package']!=null||node['has_package']!=undefined){
             //console.log("drone")    
@@ -182,7 +186,7 @@ function updateMarkers(data,timeout){
     }else{
         var j=0
         var arr= currentmarkersDrones.getLayers()
-        if(arr.length!=data.length){
+        if(arr.length!=data.length&&node['has_package']!=null){
             for(j; j < data.length; j++){
                 console.log(arr[j])
                 currentmarkersDrones.removeLayer(arr[j]);
@@ -245,3 +249,5 @@ setInterval(clearSINFO, 10000);
 //setInterval(clearDINFO, 1000);
 setInterval(requestData, 10000,'http://127.0.0.1:8000/station',0);
 setInterval(requestData, 1000,'http://127.0.0.1:8000/drone',tout);
+
+setInterval(requestData, 10000,'http://127.0.0.1:8000/package',0);

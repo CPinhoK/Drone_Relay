@@ -89,7 +89,7 @@ async def GET_drone_info(request: Request,id:str = None):
 async def Add_package_info(request: Request,pinfo: Packageinfo):
     global PACKAGE
     PACKAGE.append(pinfo)
-    return {"Message":"Packageinfo "+pinfo+" added"}
+    return {"Message":"Packageinfo "+str(pinfo)+" added"}
 
 @app.get("/package")
 async def GET_package_info(request: Request,id:str = None):
