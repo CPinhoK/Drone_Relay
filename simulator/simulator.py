@@ -53,10 +53,14 @@ def connect_mqtt(addr):
             print("ID: " + client._client_id.decode()[-2:])
             print("originating ID: " + str(msg_dict['management']['actionID']['originatingStationID']))
             station = [s for s in stations_list if s.client._client_id.decode()[-2:] == client._client_id.decode()[-2:]][0]
+            print("station will receive denm")
             next_d = station.receive_denm(msg_dict)
             if(isinstance(next_d, Drone)):
+                print("Next Drone id is:",next_d.id)
                 package.carried_by = next_d
                 package.print_carried_by()
+            else:
+                print("Next Drone returned the value:",next_d)
         else:
             pass
 
@@ -134,14 +138,19 @@ def run():
                 print("Package is moving")
                 
                 # Check if drone has enough battery to reach package_destination
-                if distance.distance(current_drone.position, package_destination) > current_drone.get_available_range():
-                    if current_drone.battery < 40:
-                        # battery status
-                        sub_cause_code = 3
-                        if current_drone.battery <= 33:
+                print("1st:"+str(distance.distance(current_drone.position, package_destination)))
+                print("1stmod:"+str(distance.distance(current_drone.position, package_destination).meters))
+                print("2nd:"+str(current_drone.get_available_range()))
+                
+                if distance.distance(current_drone.position, package_destination).meters > current_drone.get_available_range():
+                        sub_cause_code=1
+                        if current_drone.battery > 90:
+                            sub_cause_code = 3
+                        elif current_drone.battery <= 33:
                             sub_cause_code = 1
                         elif current_drone.battery <= 66:
                             sub_cause_code = 2
+                        print("Drone will send denms")
                         current_drone.send_denm(32, sub_cause_code)
                         current_drone.send_denm(34, 55)
 

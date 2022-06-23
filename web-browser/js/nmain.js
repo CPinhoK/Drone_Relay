@@ -33,6 +33,7 @@ const packageIcon = L.icon({
 //mark =L.marker([40.64,-8.65],{icon:droneIcon})
 //
 //mark.addTo(currentmarkersOBU)
+var tout = 5
 
 
 
@@ -55,8 +56,8 @@ var progressIDs = [];   // List with progress bar's IDs
 var doneList = {};      // nodes that have finished the transfer
 var startedList = {};   // nodes that have started the transfer
 var currentTS = 0;
+var showpopflag=false
 var showinfflag=false
-
 
 var prevmarkersDrones    = L.layerGroup().addTo(map);
 var prevmarkersStations  = L.layerGroup().addTo(map);
@@ -65,12 +66,12 @@ var DroneInfo =[];
 var StationInfo =[];
 
 // Pulls status information from the sim_manager and calls parseData() when ready.
-function requestData(url){ // url example http://127.0.0.1:8000/drone?id=1'
+function requestData(url,timeout){ // url example http://127.0.0.1:8000/drone?id=1'
     //console.log("requestData_called")
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function(){
         if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
-            parseData(xmlHttp.responseText);
+            parseData(xmlHttp.responseText,timeout);
     }
     xmlHttp.open( "GET",url, true);
     xmlHttp.send( null );
@@ -85,15 +86,16 @@ function changeText(domID,text){
 }
 
 // Make required changes in the map, according to the new data.
-function updateMap(data){
-    updateMarkers(data);
+function updateMap(data,timeout){
+    updateMarkers(data,timeout);
+    //currentmarkersDrones.clearLayers();
 }
 
 // Updates RSU and OBU markers for the new positions.
-function updateMarkers(data){
+function updateMarkers(data,timeout){
     // Clear and update markers
     //currentmarkersStations.clearLayers();
-    currentmarkersDrones.clearLayers();
+    //currentmarkersDrones.clearLayers();
 
 
 
@@ -160,44 +162,86 @@ function updateMarkers(data){
             }
         }
     }
-    //console.log("flag:"+showinfflag);
-    if(showinfflag){
+    //console.log("flag:"+showpopflag);
+    if(showpopflag){
         currentmarkersDrones.eachLayer(function (layer) {
             layer.openPopup();
         });
         currentmarkersStations.eachLayer(function (layer) {
             layer.openPopup();
         });
-        document.getElementById('Show_info').innerHTML= "Stations" + StationInfo +"\n\nDrones"+ DroneInfo;
+    }
+    if(showinfflag){
+        document.getElementById('Show_info').innerHTML= "Stations:\n" + StationInfo +"\n\n\nDrones:\n"+ DroneInfo;
         DroneInfo=[];
     }
+    if(timeout==0){
+        console.log(currentmarkersDrones.getLayers())
+        currentmarkersDrones.clearLayers();
+        tout=5;
+    }else{
+        var j=0
+        var arr= currentmarkersDrones.getLayers()
+        if(arr.length!=data.length){
+            for(j; j < data.length; j++){
+                console.log(arr[j])
+                currentmarkersDrones.removeLayer(arr[j]);
+            }         
+        }
+        tout--;
+    }
+
 }
 
 // Main function called for every received request (data).
-function parseData(data){
+function parseData(data,timeout){
     try{
         data = JSON.parse(data);
     }catch(err){
         console.log("err",err,"data",data);
         return;
     }
-    updateMap(data);
+    updateMap(data,timeout);
 }
 
+function clickShowPop(){
+    currentmarkersDrones.eachLayer(function (layer) {
+        layer.closePopup();
+    });
+    currentmarkersStations.eachLayer(function (layer) {
+        layer.closePopup();
+    });
+    console.log("showpop was clicked")
+    showpopflag=!showpopflag;
+    console.log(showpopflag)
+}
 function clickShowinfo(){
+    currentmarkersDrones.eachLayer(function (layer) {
+        layer.closePopup();
+    });
+    currentmarkersStations.eachLayer(function (layer) {
+        layer.closePopup();
+    });
     console.log("showinfo was clicked")
     showinfflag=!showinfflag;
     console.log(showinfflag)
     document.getElementById('Show_info').innerHTML= "";
 }
 
-function clearINFO(){
+
+
+function clearSINFO(){
     StationInfo=[];
     currentmarkersStations.clearLayers();
 }
-requestData('http://127.0.0.1:8000/station');
-requestData('http://127.0.0.1:8000/drone');
-setInterval(requestData, 10000,'http://127.0.0.1:8000/station');
-setInterval(requestData, 1000,'http://127.0.0.1:8000/drone');
+function clearDINFO(){
+    DroneInfo=[];
+    currentmarkersDrones.clearLayers();
+}
 
-setInterval(clearINFO, 10000);
+requestData('http://127.0.0.1:8000/station',0);
+requestData('http://127.0.0.1:8000/drone',0);
+setInterval(clearSINFO, 10000);
+//setInterval(clearDINFO, 1000);
+setInterval(requestData, 10000,'http://127.0.0.1:8000/station',0);
+setInterval(requestData, 1000,'http://127.0.0.1:8000/drone',tout);

@@ -1,7 +1,7 @@
-from pyrsistent import s
 import geo_lib
 from geopy import distance
 import json
+import os
 
 class Drone():
     def __init__(self, id, drone_info):
@@ -115,7 +115,6 @@ class Station():
         sub_cause_code=indic['situation']['eventType']['subCauseCode']
 
         if cause_code==34:
-            
             n_drone=self.get_available_drone()
             self.parked_drones.pop(n_drone)
             for drone in self.flying_drones:
@@ -150,9 +149,10 @@ class Station():
                     elif sub_cause_code==3:
                         drone.battery=100
                     break
+            print("\nU_Droneid:"+str(u_drone.id))
             if u_drone==None:
                 print("\n Error\n")
-                return -1
+                return u_drone
         
         #print("Battery updated for drone " + str(u_drone.id) + "; batt: " + str(sub_cause_code.bat))
         return cause_code
