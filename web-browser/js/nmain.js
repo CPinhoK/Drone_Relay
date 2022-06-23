@@ -118,7 +118,7 @@ function updateMarkers(data){
                     closeOnClick: false,
                     autoClose: false
                 });
-                popup.setContent("ID: "+node['id']+", Drone"+" Has_package: "+node['has_package']);
+                popup.setContent("ID: "+node['id']+", Drone"+" Has_package: "+node['has_package'] +" Battery:"+node['battery']);
                 marker.bindPopup(popup).openPopup();
 
 
@@ -137,10 +137,10 @@ function updateMarkers(data){
                 console.log(err)
         }
         }else{
+            currentmarkersStations.clearLayers();
             StationInfo =[];
             console.log("station")
             try {
-                currentmarkersStations.clearLayers();
 
                 marker = L.marker([node['lat'],node['lon']], {icon:stationIcon});
                 const popup = L.popup({
@@ -195,7 +195,6 @@ function clickShowinfo(){
 
 function clearINFO(){
     StationInfo=[];
-    DroneInfo=[];
 }
 
 setInterval(requestData, 5000,'http://127.0.0.1:8000/station');

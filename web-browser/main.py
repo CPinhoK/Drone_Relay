@@ -20,6 +20,7 @@ class Droneinfo(BaseModel):
     lat: float
     lon: float
     has_package: bool
+    battery: int
     
 class Packageinfo(BaseModel):
     has_arrived:bool

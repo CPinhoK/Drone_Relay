@@ -13,6 +13,7 @@ do
     "lat":'$x',
     "lon": -8.631619736734109,
     "has_package": true
+    "battery": 12
   }'
  sleep 1
  x=$(echo $x + 0.0005 | bc)
