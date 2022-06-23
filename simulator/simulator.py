@@ -25,7 +25,7 @@ topic_cam_in = "vanetza/in/cam"
 topic_cam_out = "vanetza/out/cam"
 topic_denm_in = "vanetza/in/denm"
 topic_denm_out = "vanetza/out/denm"
-m = "{\"accEngaged\":false,\"acceleration\":10,\"altitude\":800001,\"altitudeConf\":15,\"brakePedal\":true,\"collisionWarning\":true,\"cruiseControl\":true,\"curvature\":1023,\"driveDirection\":\"FORWARD\",\"emergencyBrake\":true,\"gasPedal\":false,\"heading\":3601,\"headingConf\":127,\"latitude\":400000000,\"length\":100,\"longitude\":-80000000,\"semiMajorConf\":4095,\"semiMajorOrient\":3601,\"semiMinorConf\":4095,\"specialVehicle\":{\"publicTransportContainer\":{\"embarkationStatus\":false}},\"speed\":16383,\"speedConf\":127,\"speedLimiter\":true,\"stationID\":1,\"stationType\":15,\"width\":30,\"yawRate\":0}"
+m = "{\"accEngaged\":false,\"acceleration\":10,\"altitude\":800001,\"altitudeConf\":15,\"brakePedal\":true,\"collisionWarning\":true,\"cruiseControl\":true,\"curvature\":1023,\"driveDirection\":\"FORWARD\",\"emergencyBrake\":true,\"gasPedal\":false,\"heading\":3601,\"headingConf\":127,\"latitude\":40.0000000,\"length\":100,\"longitude\":-8.0000000,\"semiMajorConf\":4095,\"semiMajorOrient\":3601,\"semiMinorConf\":4095,\"specialVehicle\":{\"publicTransportContainer\":{\"embarkationStatus\":false}},\"speed\":16383,\"speedConf\":127,\"speedLimiter\":true,\"stationID\":1,\"stationType\":15,\"width\":3.0,\"yawRate\":0}"
 
 def connect_mqtt(addr):
     def on_connect(client, userdata, flags, rc):
@@ -74,11 +74,19 @@ def connect_mqtt(addr):
     return client
 
 
-def publish(client, topic, msg):
-    msg = msg.replace("\'", "\"")
+def publish(client, topic, msg,test=None):
+    print(msg)
+    if test!=None:
+        msg=msg
+    else:
+        msg = msg.replace("\'", "\"")
     msg_count = 0
     #msg = f"messages: {msg_count}"
-    result = client.publish(topic, msg)
+    if test!=None:
+        encode_data = json.dumps(msg).encode('utf-8')
+        result = client.publish(topic, encode_data)
+    else:
+        result = client.publish(topic, msg)
     # result: [0, 1]
     status = result[0]
     if status == 0:
@@ -133,31 +141,32 @@ def run():
         block_by_range()
 
     while True:
+        #publish(drones_list[1].client, topic_cam_in, cam_template, 1)
         for d in drones_list:
             msg = cam_template
-            msg['stationID'] = int(d.id)
+            msg['stationID'] = 2
             msg['stationType'] = 5
-            msg['speed'] = d.speed
+            msg['speed'] = 16383
             msg['latitude'] = d.latitude
             msg['longitude'] = d.longitude
             
-            if d.hasCargo:
+            """ if d.hasCargo:
                 msg['altitude'] = 20
             else:
-                msg['altitude'] = 0
+                msg['altitude'] = 0 """
             
-            publish(d.client, topic_cam_in, str(msg))
+            publish(d.client, topic_cam_in, msg,1)
             
         for s in stations_list:
             msg = cam_template
-            msg['stationID'] = int(s.id)
+            msg['stationID'] = 3
             msg['stationType'] = 15
-            msg['speed'] = 0
+            msg['speed'] = 16383
             msg['latitude'] = s.latitude
-            msg['longitude'] = s.longitude
-            msg['altitude'] = 0
+            msg['longitude'] = s.longitude 
+            #msg['altitude'] = 0 
             
-            publish(s.client, topic_cam_in, str(msg))
+            publish(s.client, topic_cam_in, msg,1)
 
         # The package didn't arrive to destination yet
         if distance.distance(package.position, package_destination).m > 100:
