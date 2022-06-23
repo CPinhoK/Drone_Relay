@@ -73,6 +73,15 @@ npayload = dict(ndata)
 nres = requests.post(nurl,headers=headers,json=npayload)
 print(nres.text)
 
+#station post
+print("hello")
+nurl = "http://127.0.0.1:8000/station"
+ndata = {"id": "asdasdas","lat": DataList_1[22][0],"lon": DataList_1[21][1],"drones":[]}
+npayload = dict(ndata)
+nres = requests.post(nurl,headers=headers,json=npayload)
+print(nres.text)
+
+
 
 
 for i in range(len(DataList_1)):

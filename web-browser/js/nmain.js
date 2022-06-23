@@ -137,8 +137,6 @@ function updateMarkers(data){
                 console.log(err)
         }
         }else{
-            currentmarkersStations.clearLayers();
-            StationInfo =[];
             console.log("station")
             try {
 
@@ -195,6 +193,7 @@ function clickShowinfo(){
 
 function clearINFO(){
     StationInfo=[];
+    currentmarkersStations.clearLayers();
 }
 
 setInterval(requestData, 5000,'http://127.0.0.1:8000/station');
