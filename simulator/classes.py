@@ -12,7 +12,7 @@ class Drone():
         self.speed = drone_info['speed']
         self.acceleration = drone_info['acceleration']
         self.battery = 100
-        self.max_range = 6
+        self.max_range = 6000
         self.current_race = 0
         self.hasCargo = False
         self.moving = False
@@ -23,13 +23,16 @@ class Drone():
         
     def start_race(self):
         self.current_race = 0
-        self.speed = 20
+        self.speed = 5000
     
     # destination tuple(latitude, longitude); time_interval in seconds
     def move_forward(self, destination, time_interval):
-        dist = time_interval*3600/self.speed
+        dist = time_interval*self.speed/3600*1000
         self.position = geo_lib.get_coordinates(self.position, destination, dist)
         self.current_race += dist
+
+        print("\nDist: " + str(dist))
+
         self.update_battery_level(dist)
         print("Drone new position " + str(self.position))
 
@@ -55,6 +58,7 @@ class Drone():
         self.send_denm(32, sub_cause_code)
 
     def update_battery_level(self, dist):
+        print('\nBattery reduce: ' + str(dist*100/self.max_range))
         self.battery -= dist*100/self.max_range
 
     def get_available_range(self):
@@ -67,7 +71,7 @@ class Drone():
         f = open('in_denm.json')
         msg = json.load(f)
 
-        msg['management']['actionID']['originatingStationID'] = self.client._client_id.decode()[-2:]
+        msg['management']['actionID']['originatingStationID'] = int(self.client._client_id.decode()[-2:])
         msg['management']['stationType'] = 5
         msg['situation']['eventType']['causeCode'] = cause_code
         msg['situation']['eventType']['subCauseCode'] = sub_cause_code
@@ -109,7 +113,9 @@ class Station():
         drone_id=indic['management']['actionID']['originatingStationID']
         cause_code=indic['situation']['eventType']['causeCode']
         sub_cause_code=indic['situation']['eventType']['subCauseCode']
+
         if cause_code==34:
+            
             n_drone=self.get_available_drone()
             self.parked_drones.pop(n_drone)
             for drone in self.flying_drones:
@@ -120,7 +126,9 @@ class Station():
                     break
             n_drone.hasCargo=True
             self.flying_drones.append(n_drone)
+            return n_drone
         if cause_code==32:
+            print("\n Battery updated for drone " + str(drone_id) + "; batt: " + str(sub_cause_code) + "\n")
             u_drone=None
             for drone in self.parked_drones:
                 if drone_id==drone.id:
@@ -145,6 +153,8 @@ class Station():
             if u_drone==None:
                 print("\n Error\n")
                 return -1
+        
+        #print("Battery updated for drone " + str(u_drone.id) + "; batt: " + str(sub_cause_code.bat))
         return cause_code
         
 
@@ -155,4 +165,5 @@ class Package():
         self.position = (self.latitude, self.longitude)
         self.carried_by = None
 
-    
+    def print_carried_by(self):
+        print("Package carried by drone " + self.carried_by.id)

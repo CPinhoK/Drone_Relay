@@ -3,7 +3,9 @@ services:
     rsu-11:
         hostname: rsu-11
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        ##image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -24,7 +26,9 @@ services:
     rsu-12:
         hostname: rsu-12
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        ##image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -45,7 +49,8 @@ services:
     rsu-13:
         hostname: rsu-13
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -66,7 +71,8 @@ services:
     rsu-14:
         hostname: rsu-14
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -87,7 +93,8 @@ services:
     rsu-15:
         hostname: rsu-15
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -109,7 +116,8 @@ services:
     obu-21:
         hostname: obu-21
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -130,7 +138,8 @@ services:
     obu-22:
         hostname: obu-22
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -151,7 +160,8 @@ services:
     obu-23:
         hostname: obu-23
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -172,7 +182,8 @@ services:
     obu-24:
         hostname: obu-24
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -193,7 +204,8 @@ services:
     obu-25:
         hostname: obu-25
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -214,7 +226,8 @@ services:
     obu-26:
         hostname: obu-26
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -235,7 +248,8 @@ services:
     obu-27:
         hostname: obu-27
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -256,7 +270,8 @@ services:
     obu-28:
         hostname: obu-28
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -277,7 +292,8 @@ services:
     obu-29:
         hostname: obu-29
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:
@@ -298,7 +314,8 @@ services:
     obu-30:
         hostname: obu-30
         restart: always
-        image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        #image: code.nap.av.it.pt:5050/mobility-networks/vanetza:latest
+        image: vanetza:test
         cap_add:
             - "NET_ADMIN"
         environment:

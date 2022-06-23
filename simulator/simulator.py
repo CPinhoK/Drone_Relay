@@ -3,6 +3,7 @@ import paho.mqtt.client as mqttclient
 from geopy import distance
 import time
 import os
+import requests
 from classes import Drone
 from classes import Station
 from classes import Package
@@ -18,6 +19,7 @@ drones_addresses = ["192.168.98.21", "192.168.98.22", "192.168.98.23", "192.168.
 drones_list = []
 stations_list = []
 package = None
+enter_new_station = False
 
 topic_cam_in = "vanetza/in/cam"
 topic_cam_out = "vanetza/out/cam"
@@ -44,10 +46,17 @@ def connect_mqtt(addr):
                     break
             drone.pick_package(package)
 
-        # if message received by RSU (station) with OBU (drone) battery status 
-        elif msg_dict['situation']['eventType']['causeCode'] == 32 and msg_dict['management']['stationType'] == 15:
-            # update battery status on stations
-            station = [x for x in stations_list if x.client._client_id.decode()[-2:] == str(msg_dict['management']['actionID']['originatingStationID'])]
+        # if message received by RSU (station) with OBU (drone) battery status
+        # only one station will receive this DENM because of range 
+        
+        elif client._client_id.decode()[-2:] in ['11', '12', '13', '14', '15']:
+            print("ID: " + client._client_id.decode()[-2:])
+            print("originating ID: " + str(msg_dict['management']['actionID']['originatingStationID']))
+            station = [s for s in stations_list if s.client._client_id.decode()[-2:] == client._client_id.decode()[-2:]][0]
+            next_d = station.receive_denm(msg_dict)
+            if(isinstance(next_d, Drone)):
+                package.carried_by = next_d
+                package.print_carried_by()
         else:
             pass
 
@@ -96,6 +105,7 @@ def run():
         new_drone.client = connect_mqtt(drones_addresses[i])
         new_drone.client.loop_start() # Connect to brocker
         drones_list.append(new_drone)
+        update_map_drone(new_drone.client._client_id.decode()[-2:], new_drone.latitude, new_drone.longitude, new_drone.hasCargo, new_drone.battery)
         
 
     for j in range(len(sim_info['stations'])):
@@ -104,6 +114,8 @@ def run():
         new_station.client = connect_mqtt(stations_addresses[j])
         new_station.client.loop_start() # Connect to brocker
         stations_list.append(new_station)
+        update_map_station(new_station.client._client_id.decode()[-2:], new_station.latitude, new_station.longitude, [d.id for d in new_station.parked_drones])
+
 
     os.chdir('../../vanetza')
     if INIT_BLOCK:
@@ -120,12 +132,23 @@ def run():
             if package.carried_by != None:
                 current_drone = package.carried_by
                 print("Package is moving")
+                
+                # Check if drone has enough battery to reach package_destination
+                if distance.distance(current_drone.position, package_destination) > current_drone.get_available_range():
+                    if current_drone.battery < 40:
+                        # battery status
+                        sub_cause_code = 3
+                        if current_drone.battery <= 33:
+                            sub_cause_code = 1
+                        elif current_drone.battery <= 66:
+                            sub_cause_code = 2
+                        current_drone.send_denm(32, sub_cause_code)
+                        current_drone.send_denm(34, 55)
 
-                # Check if drone han enough battery to reach package_destination
-                if distance.distance(current_drone.position, package_destination) < current_drone.get_available_range():
-                    pass
                 current_drone.move_forward(package_destination, time_interval)
                 package.position = current_drone.position
+
+                update_map_drone(current_drone.client._client_id.decode()[-2:], current_drone.position[0], current_drone.position[1], current_drone.hasCargo, current_drone.battery)
                 update_in_range(current_drone)
             
             # The package is not moving, it should be picked up by a drone
@@ -164,6 +187,7 @@ def update_in_range(drone):
 
                 drone.last_station = s
                 closest_station = s
+                enter_new_station = True
                 break
 
     if closest_station != None:
@@ -190,7 +214,7 @@ def update_in_range(drone):
                     os.system(f'docker-compose exec obu-{d_id} unblock 6e:06:e0:03:00:{drone_id}')    
 
 
-def block_by_range():
+""" def block_by_range():
     for drone in drones_list:
         drone_id = drone.client._client_id.decode()[-2:]
         for d in [x for x in drones_list if x != drone]:
@@ -213,8 +237,29 @@ def block_by_range():
             s_id = s.client._client_id.decode()[-2:]
             if distance.distance(station.position, s.position).m > 500:
                 #print(f'docker-compose exec obu-{drone_id} block 6e:06:e0:03:00:{d_id}')
-                os.system(f'docker-compose exec rsu-{station_id} block 6e:06:e0:03:00:{s_id}')
+                os.system(f'docker-compose exec rsu-{station_id} block 6e:06:e0:03:00:{s_id}') """
+
+def block_by_range():
+    for drone in drones_list:      
+        for s in stations_list:
+            s_id = s.client._client_id.decode()[-2:]
+            if distance.distance(drone.position, s.position).m < 500:
+                drone.last_station = s
+                
         
+def update_map_station(id, lat, long, parked_drones):
+    data={"id": str(id),"lat": float(lat),"lon": float(long),"drones": parked_drones}
+    headers = {'accept': 'application/json','Content-Type': 'application/json'}
+    payload = dict(data)
+    url = "http://127.0.0.1:8000/station"
+    res = requests.post(url,headers=headers,json=payload)
+
+def update_map_drone(id, lat, long, has_cargo, battery):
+    data={"id": str(id),"lat": float(lat),"lon": float(long),"has_package": has_cargo, "battery": battery}
+    headers = {'accept': 'application/json','Content-Type': 'application/json'}
+    payload = dict(data)
+    url = "http://127.0.0.1:8000/drone"
+    res = requests.post(url,headers=headers,json=payload)
 
 if __name__ == '__main__':
     run()
