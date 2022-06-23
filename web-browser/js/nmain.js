@@ -66,7 +66,7 @@ var StationInfo =[];
 
 // Pulls status information from the sim_manager and calls parseData() when ready.
 function requestData(url){ // url example http://127.0.0.1:8000/drone?id=1'
-    console.log("requestData_called")
+    //console.log("requestData_called")
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function(){
         if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
@@ -103,7 +103,7 @@ function updateMarkers(data){
         var marker = null;
         
         if(node['has_package']!=null||node['has_package']!=undefined){
-            console.log("drone")    
+            //console.log("drone")    
             try {
 
                 //console.log(node['has_package'])
@@ -137,7 +137,7 @@ function updateMarkers(data){
                 console.log(err)
         }
         }else{
-            console.log("station")
+            //console.log("station")
             try {
 
                 marker = L.marker([node['lat'],node['lon']], {icon:stationIcon});
@@ -160,7 +160,7 @@ function updateMarkers(data){
             }
         }
     }
-    console.log("flag:"+showinfflag);
+    //console.log("flag:"+showinfflag);
     if(showinfflag){
         currentmarkersDrones.eachLayer(function (layer) {
             layer.openPopup();
@@ -195,8 +195,9 @@ function clearINFO(){
     StationInfo=[];
     currentmarkersStations.clearLayers();
 }
-
-setInterval(requestData, 5000,'http://127.0.0.1:8000/station');
+requestData('http://127.0.0.1:8000/station');
+requestData('http://127.0.0.1:8000/drone');
+setInterval(requestData, 10000,'http://127.0.0.1:8000/station');
 setInterval(requestData, 1000,'http://127.0.0.1:8000/drone');
 
-setInterval(clearINFO, 5000);
+setInterval(clearINFO, 10000);
