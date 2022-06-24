@@ -67,7 +67,7 @@ var StationInfo =[];
 
 // Pulls status information from the sim_manager and calls parseData() when ready.
 function requestData(url,timeout){ // url example http://127.0.0.1:8000/drone?id=1'
-    //console.log("requestData_called")
+    ////console.log("requestData_called")
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function(){
         if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
@@ -100,19 +100,26 @@ function updateMarkers(data,timeout){
 
 
     for(i = 0; i < data.length; i++){
-        console.log(data[i])
+        //console.log(data[i])
         var node = data[i];
         var marker = null;
 
         if(node['has_arrived']!=null){
-            document.getElementById('Packageinf').innerHTML= "Package arrived to destination:"+node['has_arrived']+"\n\n";
+            if(node['has_arrived']){
+                document.getElementById('Packageinf').innerHTML= "Package arrived to destination:"+node['has_arrived']+"\n\n";
+                document.getElementById("Packageinf").style.color = "blue";
+            }else{
+                document.getElementById('Packageinf').innerHTML= "Package arrived to destination:"+node['has_arrived']+"\n\n";
+                document.getElementById("Packageinf").style.color = "red";
+            }
+
         }
         
         if(node['has_package']!=null||node['has_package']!=undefined){
-            //console.log("drone")    
+            ////console.log("drone")    
             try {
 
-                //console.log(node['has_package'])
+                ////console.log(node['has_package'])
                 if(node['has_package']==true){
                     marker = L.marker([node['lat'],node['lon']], {icon:droneIconpack});
                 }
@@ -140,10 +147,10 @@ function updateMarkers(data,timeout){
                 DroneInfo.push(JSON.stringify(node))
             }
             catch(err) {
-                console.log(err)
+                //console.log(err)
         }
         }else{
-            //console.log("station")
+            ////console.log("station")
             try {
 
                 marker = L.marker([node['lat'],node['lon']], {icon:stationIcon});
@@ -162,11 +169,11 @@ function updateMarkers(data,timeout){
                 StationInfo.push(JSON.stringify(node))
             }
             catch(err) {
-                console.log(err)
+                //console.log(err)
             }
         }
     }
-    //console.log("flag:"+showpopflag);
+    ////console.log("flag:"+showpopflag);
     if(showpopflag){
         currentmarkersDrones.eachLayer(function (layer) {
             layer.openPopup();
@@ -180,7 +187,7 @@ function updateMarkers(data,timeout){
         DroneInfo=[];
     }
     if(timeout==0){
-        console.log(currentmarkersDrones.getLayers())
+        //console.log(currentmarkersDrones.getLayers())
         currentmarkersDrones.clearLayers();
         tout=5;
     }else{
@@ -188,7 +195,7 @@ function updateMarkers(data,timeout){
         var arr= currentmarkersDrones.getLayers()
         if(arr.length!=data.length&&node['has_package']!=null){
             for(j; j < data.length; j++){
-                console.log(arr[j])
+                //console.log(arr[j])
                 currentmarkersDrones.removeLayer(arr[j]);
             }         
         }
@@ -202,7 +209,7 @@ function parseData(data,timeout){
     try{
         data = JSON.parse(data);
     }catch(err){
-        console.log("err",err,"data",data);
+        //console.log("err",err,"data",data);
         return;
     }
     updateMap(data,timeout);
@@ -215,9 +222,9 @@ function clickShowPop(){
     currentmarkersStations.eachLayer(function (layer) {
         layer.closePopup();
     });
-    console.log("showpop was clicked")
+    //console.log("showpop was clicked")
     showpopflag=!showpopflag;
-    console.log(showpopflag)
+    //console.log(showpopflag)
 }
 function clickShowinfo(){
     currentmarkersDrones.eachLayer(function (layer) {
@@ -226,9 +233,9 @@ function clickShowinfo(){
     currentmarkersStations.eachLayer(function (layer) {
         layer.closePopup();
     });
-    console.log("showinfo was clicked")
+    //console.log("showinfo was clicked")
     showinfflag=!showinfflag;
-    console.log(showinfflag)
+    //console.log(showinfflag)
     document.getElementById('Show_info').innerHTML= "";
 }
 
