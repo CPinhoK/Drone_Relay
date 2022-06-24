@@ -57,7 +57,7 @@ templates = Jinja2Templates(directory="./")
 
 @app.get("/")
 async def root():
-    return {"message": "Hello ! Welcome to DroneRelay"}
+    return {"message": "Hello!! Welcome to DroneRelay, you probably want to go to /map"}
 
 @app.get("/status")
 async def get_status():
